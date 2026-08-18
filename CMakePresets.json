@@ -1,0 +1,41 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+                "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++"
+            }
+        },
+        {
+            "name": "sanitize",
+            "displayName": "Sanitize (line info for compute-sanitizer)",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build-sanitize",
+            "cacheVariables": {
+                "CMAKE_CUDA_FLAGS": "-lineinfo -Xcompiler=-g"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default"
+        },
+        {
+            "name": "sanitize",
+            "configurePreset": "sanitize"
+        }
+    ]
+}
