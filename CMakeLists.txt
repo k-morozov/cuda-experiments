@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 4.2)
 
 project(cuda_experiments LANGUAGES CXX CUDA)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(FATAL_ERROR "Need GNU C++ compiler (g++), found: ${CMAKE_CXX_COMPILER_ID}")
 endif()
@@ -25,7 +27,7 @@ set(CMAKE_CUDA_ARCHITECTURES native)
 
 find_package(CUDAToolkit REQUIRED)
 
-add_executable(cuda_experiments src/main.cu)
+add_executable(cuda_experiments src/main.cu src/gemm.cu)
 
 target_link_libraries(cuda_experiments PRIVATE CUDA::cudart)
 target_include_directories(cuda_experiments PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
