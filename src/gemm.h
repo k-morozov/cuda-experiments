@@ -9,5 +9,6 @@ struct DeviceMatrix {
     size_t stride;
 };
 
-void GEMM(const DeviceMatrix &a, const DeviceMatrix &b, const DeviceMatrix &c,
-          DeviceMatrix &d);
+void GEMM_v1(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d);
+void GEMM_v2(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d);
+void GEMM_v3(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d);
