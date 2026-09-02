@@ -113,11 +113,11 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
     __shared__ __half a_smem[BM][BK];
     __shared__ __half b_smem[BK][BN];
 
-    const int col = blockIdx.x * BM + 4 * threadIdx.x;
-    const int row = blockIdx.y * BN + 4 * threadIdx.y;
+    const int col = blockIdx.x * BM + threadIdx.x;
+    const int row = blockIdx.y * BN + threadIdx.y;
 
-    const int tx = 4 * threadIdx.x;
-    const int ty = 4 * threadIdx.y;
+    const int tx = threadIdx.x;
+    const int ty = threadIdx.y;
 
     if (row < d.rows && col < d.cols) {
         *(d.data + row * d.stride + col) = 0;
@@ -127,8 +127,8 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
 
     for (int k = 0; k < a.cols; k += BK) {
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < blockDim.x; i += blockDim.x) {
+            for (int j = 0; j < blockDim.y; j += 8) {
                 if ((row + j) < a.rows && (tx + k + i) < a.cols) {
                     a_smem[ty + j][tx + i] =
                         *(a.data + (row + j) * a.stride + (tx + k + i));
@@ -147,10 +147,10 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
 
         __syncthreads();
 
-        for (int kk = 0; kk < BK; kk += 4) {
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 4; j++) {
-                    for (int ks = 0; ks < 4; ks++) {
+        for (int kk = 0; kk < BK; kk += 8) {
+            for (int i = 0; i < blockDim.x; i += 8) {
+                for (int j = 0; j < blockDim.y; j += 8) {
+                    for (int ks = 0; ks < 8; ks++) {
                         partial_acc[j][i] +=
                             a_smem[ty + j][kk + ks] * b_smem[kk + ks][tx + i];
                     }
@@ -161,8 +161,8 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
         __syncthreads();
     }
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+    for (int i = 0; i < blockDim.x; i += 8) {
+        for (int j = 0; j < blockDim.y; j += 8) {
             if ((row + j) < d.rows && (col + i) < d.cols) {
                 *(d.data + (row + j) * d.stride + (col + i)) =
                     partial_acc[j][i];
