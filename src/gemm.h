@@ -12,3 +12,4 @@ struct DeviceMatrix {
 void GEMM_v1(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d);
 void GEMM_v2(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d);
 void GEMM_v3(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d);
+void GEMM_v4(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d);

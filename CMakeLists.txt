@@ -44,6 +44,9 @@ target_link_libraries(example_gemm_v2 PRIVATE gemm_demo)
 add_executable(example_gemm_v3 examples/gemm_v3.cu)
 target_link_libraries(example_gemm_v3 PRIVATE gemm_demo)
 
+add_executable(example_gemm_v4 examples/gemm_v4.cu)
+target_link_libraries(example_gemm_v4 PRIVATE gemm_demo)
+
 option(CUDA_EXPERIMENTS_BUILD_TESTS "Build tests" ON)
 if(CUDA_EXPERIMENTS_BUILD_TESTS)
     enable_testing()

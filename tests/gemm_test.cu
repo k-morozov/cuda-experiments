@@ -21,6 +21,7 @@ const GemmVariant kGemmVariants[] = {
     {"v1", GEMM_v1},
     {"v2", GEMM_v2},
     {"v3", GEMM_v3},
+    {"v4", GEMM_v4},
 };
 
 std::string VariantTag(const GemmVariant &variant) {
