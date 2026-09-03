@@ -113,61 +113,48 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
     __shared__ __half a_smem[BM][BK];
     __shared__ __half b_smem[BK][BN];
 
-    const int col = blockIdx.x * BM + threadIdx.x;
-    const int row = blockIdx.y * BN + threadIdx.y;
+    const int bix = blockIdx.x;
+    const int biy = blockIdx.y;
 
     const int tx = threadIdx.x;
     const int ty = threadIdx.y;
 
-    if (row < d.rows && col < d.cols) {
-        *(d.data + row * d.stride + col) = 0;
-    }
+    // if (by < d.rows && bx < d.cols) {
+    // *(d.data + by * d.stride + bx) = 0;
+    // }
 
-    __half partial_acc[4][4]{};
+    constexpr int tpb = 16;
+
+    __half partial_acc[tpb][tpb]{};
 
     for (int k = 0; k < a.cols; k += BK) {
 
-        for (int i = 0; i < blockDim.x; i += blockDim.x) {
-            for (int j = 0; j < blockDim.y; j += 8) {
-                if ((row + j) < a.rows && (tx + k + i) < a.cols) {
-                    a_smem[ty + j][tx + i] =
-                        *(a.data + (row + j) * a.stride + (tx + k + i));
-                } else {
-                    a_smem[ty + j][tx + i] = 0.f;
-                }
+        if ((biy * blockDim.y + ty) < a.rows && (tx + k) < a.cols) {
+            a_smem[ty][tx] =
+                *(a.data + (biy * blockDim.y + ty) * a.stride + (tx + k));
+        } else {
+            a_smem[ty][tx] = 0.f;
+        }
 
-                if ((ty + k + i) < b.rows && (col + j) < b.cols) {
-                    b_smem[ty + i][tx + j] =
-                        *(b.data + (ty + k + i) * b.stride + col + j);
-                } else {
-                    b_smem[ty + i][tx + j] = 0.f;
-                }
-            }
+        if ((ty + k) < b.rows && (bix * blockDim.x + tx) < b.cols) {
+            b_smem[ty][tx] =
+                *(b.data + (ty + k) * b.stride + (bix * blockDim.x + tx));
+        } else {
+            b_smem[ty][tx] = 0.f;
         }
 
         __syncthreads();
 
-        for (int kk = 0; kk < BK; kk += 8) {
-            for (int i = 0; i < blockDim.x; i += 8) {
-                for (int j = 0; j < blockDim.y; j += 8) {
-                    for (int ks = 0; ks < 8; ks++) {
-                        partial_acc[j][i] +=
-                            a_smem[ty + j][kk + ks] * b_smem[kk + ks][tx + i];
-                    }
-                }
-            }
+        for (int ks = 0; ks < BK; ks++) {
+            partial_acc[ty][tx] += a_smem[ty][ks] * b_smem[ks][tx];
         }
 
         __syncthreads();
     }
 
-    for (int i = 0; i < blockDim.x; i += 8) {
-        for (int j = 0; j < blockDim.y; j += 8) {
-            if ((row + j) < d.rows && (col + i) < d.cols) {
-                *(d.data + (row + j) * d.stride + (col + i)) =
-                    partial_acc[j][i];
-            }
-        }
+    if ((biy * blockDim.y + ty) < d.rows && (bix * blockDim.x + tx) < d.cols) {
+        *(d.data + (biy * blockDim.y + ty) * d.stride +
+          (bix * blockDim.x + tx)) = partial_acc[ty][tx];
     }
 }
 } // namespace
@@ -199,10 +186,10 @@ void GEMM_v3(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d) {
 }
 
 void GEMM_v4(const DeviceMatrix &a, const DeviceMatrix &b, DeviceMatrix &d) {
-    constexpr int TILE_M = 32;
-    constexpr int TILE_N = 32;
-    constexpr int TILE_K = 32;
-    dim3 threads(TILE_M / 4, TILE_N / 4);
+    constexpr int TILE_M = 16;
+    constexpr int TILE_N = 16;
+    constexpr int TILE_K = 16;
+    dim3 threads(16, 16);
     dim3 blocks(cuda::ceil_div(d.cols, threads.x),
                 cuda::ceil_div(d.rows, threads.y));
     gemm_impl_v4<TILE_M, TILE_N, TILE_K><<<blocks, threads>>>(a, b, d);

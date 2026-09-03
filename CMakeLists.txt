@@ -47,6 +47,29 @@ target_link_libraries(example_gemm_v3 PRIVATE gemm_demo)
 add_executable(example_gemm_v4 examples/gemm_v4.cu)
 target_link_libraries(example_gemm_v4 PRIVATE gemm_demo)
 
+add_library(gemm_square_demo STATIC examples/gemm_square_demo.cpp)
+target_include_directories(gemm_square_demo PUBLIC examples)
+target_link_libraries(gemm_square_demo PUBLIC gemm)
+
+add_executable(example_gemm_v4_16x16 examples/gemm_v4_16x16.cu)
+target_link_libraries(example_gemm_v4_16x16 PRIVATE gemm_square_demo)
+
+add_executable(example_gemm_v4_32x32 examples/gemm_v4_32x32.cu)
+target_link_libraries(example_gemm_v4_32x32 PRIVATE gemm_square_demo)
+
+add_executable(example_gemm_v4_square examples/gemm_v4_square.cu)
+target_link_libraries(example_gemm_v4_square PRIVATE gemm_square_demo)
+
+add_library(gemm_unique_demo STATIC examples/gemm_unique_demo.cpp)
+target_include_directories(gemm_unique_demo PUBLIC examples)
+target_link_libraries(gemm_unique_demo PUBLIC gemm)
+
+add_executable(example_gemm_v4_8x8_unique examples/gemm_v4_8x8_unique.cu)
+target_link_libraries(example_gemm_v4_8x8_unique PRIVATE gemm_unique_demo)
+
+add_executable(example_gemm_v4_4x4_unique examples/gemm_v4_4x4_unique.cu)
+target_link_libraries(example_gemm_v4_4x4_unique PRIVATE gemm_unique_demo)
+
 option(CUDA_EXPERIMENTS_BUILD_TESTS "Build tests" ON)
 if(CUDA_EXPERIMENTS_BUILD_TESTS)
     enable_testing()
