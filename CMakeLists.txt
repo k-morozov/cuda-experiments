@@ -27,7 +27,11 @@ set(CMAKE_CUDA_ARCHITECTURES native)
 
 find_package(CUDAToolkit REQUIRED)
 
-add_library(gemm STATIC src/gemm.cu)
+add_library(gemm STATIC
+    src/gemm_v1.cu
+    src/gemm_v2.cu
+    src/gemm_v3.cu
+    src/gemm_v4.cu)
 target_include_directories(gemm PUBLIC src)
 target_link_libraries(gemm PUBLIC CUDA::cudart)
 
