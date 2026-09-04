@@ -119,6 +119,9 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
     const int tx = threadIdx.x;
     const int ty = threadIdx.y;
 
+    const int outx = bix * blockDim.x + tx;
+    const int outy = biy * blockDim.y + ty;
+
     // if (by < d.rows && bx < d.cols) {
     // *(d.data + by * d.stride + bx) = 0;
     // }
@@ -129,16 +132,14 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
 
     for (int k = 0; k < a.cols; k += BK) {
 
-        if ((biy * blockDim.y + ty) < a.rows && (tx + k) < a.cols) {
-            a_smem[ty][tx] =
-                *(a.data + (biy * blockDim.y + ty) * a.stride + (tx + k));
+        if (outy < a.rows && (tx + k) < a.cols) {
+            a_smem[ty][tx] = *(a.data + outy * a.stride + (tx + k));
         } else {
             a_smem[ty][tx] = 0.f;
         }
 
-        if ((ty + k) < b.rows && (bix * blockDim.x + tx) < b.cols) {
-            b_smem[ty][tx] =
-                *(b.data + (ty + k) * b.stride + (bix * blockDim.x + tx));
+        if ((ty + k) < b.rows && outx < b.cols) {
+            b_smem[ty][tx] = *(b.data + (ty + k) * b.stride + outx);
         } else {
             b_smem[ty][tx] = 0.f;
         }
@@ -152,9 +153,8 @@ __global__ void gemm_impl_v4(const DeviceMatrix a, const DeviceMatrix b,
         __syncthreads();
     }
 
-    if ((biy * blockDim.y + ty) < d.rows && (bix * blockDim.x + tx) < d.cols) {
-        *(d.data + (biy * blockDim.y + ty) * d.stride +
-          (bix * blockDim.x + tx)) = partial_acc[ty][tx];
+    if (outy < d.rows && outx < d.cols) {
+        *(d.data + outy * d.stride + outx) = partial_acc[ty][tx];
     }
 }
 } // namespace
